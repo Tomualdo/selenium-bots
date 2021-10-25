@@ -4,9 +4,10 @@ import time
 
 with Candy() as bot:
     bot.open_page()
-    bot.candy_icon()
+    bot.sing_in()
     bot.login()
-    bot.candy_icon()
+    bot.open_page_candy()
+    bot.candys_available()
     bot.get_points()
     
 
