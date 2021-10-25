@@ -8,7 +8,7 @@ with Candy() as bot:
     bot.login()
     bot.open_page_candy()
     bot.candys_available()
-    bot.get_points()
+    # bot.get_points()
     
 
 

@@ -1,11 +1,13 @@
-import os, sys
+import os, sys, platform
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from creds import PASS, USER
+from binary_locations import search_binary
 
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
+
 
 
 class Candy(webdriver.Chrome):
@@ -14,14 +16,12 @@ class Candy(webdriver.Chrome):
         options = Options()
         options.add_experimental_option("detach", True)
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.binary_location = \
-            r"C:\Users\tkrajcoviech\AppData\Local\BraveSoftware\Brave-Browser\Application\brave.exe"
-        driver_path = Service(pwd+r'\chromedriver_95.exe',)
+        options.binary_location = search_binary()
+        driver_path = Service(pwd+r'\chromedriver_94.exe',)
         super(Candy, self).__init__(options=options, service=driver_path)
         self.implicitly_wait(5000)
         self.maximize_window()
         
-    
     def __exit__(self, *args) -> None:
         print("Exiting...")
         self.quit()
@@ -50,6 +50,10 @@ class Candy(webdriver.Chrome):
         self.find_element_by_css_selector('input[data-target="points.button"]').click()
 
     def candys_available(self):
-        content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
-        res = content.get_attribute('innerHTML')
-        print(res)
+        try:
+            content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
+            res = content.get_attribute('innerHTML')
+            print(f"No candies available...wait {res}")
+        except:
+            print("There are candies available")
+            self.get_points()
