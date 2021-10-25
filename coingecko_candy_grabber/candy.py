@@ -5,7 +5,6 @@ from creds import PASS, USER
 from binary_locations import search_binary
 
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
 
 
@@ -17,8 +16,8 @@ class Candy(webdriver.Chrome):
         options.add_experimental_option("detach", True)
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
         options.binary_location = search_binary()
-        driver_path = Service(pwd+r'\chromedriver_94.exe',)
-        super(Candy, self).__init__(options=options, service=driver_path)
+        #driver_path = pwd+r'/chromedriver'
+        super(Candy, self).__init__(options=options)
         self.implicitly_wait(5000)
         self.maximize_window()
         
