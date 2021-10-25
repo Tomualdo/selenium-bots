@@ -1,4 +1,5 @@
 import os, sys, platform
+import logging
 from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
 from creds import PASS, USER
@@ -7,19 +8,29 @@ from binary_locations import search_binary
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webelement import WebElement
 
-
+logger = logging.getLogger('mylogger')
+def my_handler(type, value, tb):
+    logger.exception(f"Uncaught exception: {type} {value}")
 
 class Candy(webdriver.Chrome):
     def __init__(self):
         pwd = os.path.abspath(os.curdir)
+        parent_dir = os.path.split(os.getcwd())[0]
         options = Options()
-        options.add_experimental_option("detach", True)
-        options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.binary_location = search_binary()
+        #options.add_experimental_option("detach", True)
+        #options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        #options.binary_location = search_binary()
         #driver_path = pwd+r'/chromedriver'
-        super(Candy, self).__init__(options=options)
-        self.implicitly_wait(5000)
+        #print(os.environ['PATH'])
+        #os.environ['PATH'] += ":"+parent_dir
+        #print(os.environ['PATH'])
+        try:
+            super(Candy, self).__init__()
+        except Exception as e:
+            print(e)
+        self.implicitly_wait(5)
         self.maximize_window()
+        print("INIT FINISH")
         
     def __exit__(self, *args) -> None:
         print("Exiting...")
@@ -34,6 +45,7 @@ class Candy(webdriver.Chrome):
     
     def sing_in(self):
         self.find_element_by_css_selector('a[data-target="#signInModal"]').click()
+        print("singed in !")
 
     def login(self):
         email = self.find_element_by_id('signInEmail')

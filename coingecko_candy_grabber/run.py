@@ -1,30 +1,33 @@
 import platform
+import logging
 if platform.system() == 'Linux':
     from pyvirtualdisplay import Display
 
 from candy import Candy
-
-
 import time
+logging.basicConfig(filename='run.log',format='%(asctime)s %(message)s', level=logging.DEBUG)
+
 
 class VirtualDisplay:
     def __init__(self, platform) -> None:
         if platform == 'Linux':
-            self.display = Display(visible=0, size=(1650,1200))
+            self.display = Display(visible=0, size=(1280,1024))
             self.display.start()
         pass
 
     def __enter__(self):
-        if platform == 'Linux':
+        if platform.system() == 'Linux':
             print("Started Virtual diplay")
             # return self.display.start()
         pass
 
     def __exit__(self, type, value, traceback):
-        if platform == 'Linux':
-            self.display.stop()
+        if platform.system() == 'Linux':
             print("Virtual display Stop")
-        pass
+            self.display.stop()
+        else:
+            print("no linux ?")
+        
 
 with VirtualDisplay(platform.system()):
     with Candy() as bot:
