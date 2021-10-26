@@ -12,6 +12,8 @@ logger = logging.getLogger('mylogger')
 def my_handler(type, value, tb):
     logger.exception(f"Uncaught exception: {type} {value}")
 
+sys.excepthook = my_handler
+
 class Candy(webdriver.Chrome):
     def __init__(self):
         pwd = os.path.abspath(os.curdir)
@@ -59,12 +61,15 @@ class Candy(webdriver.Chrome):
 
     def get_points(self):        
         self.find_element_by_css_selector('input[data-target="points.button"]').click()
+        print("Candies grabbed !")
+        self.candy_qty()
 
     def candys_available(self):
-        try:
-            content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
-            res = content.get_attribute('innerHTML')
-            print(f"No candies available...wait {res}")
-        except:
-            print("There are candies available")
-            self.get_points()
+        content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
+        res = content.get_attribute('innerHTML')
+        print(f"No candies available...wait {res}")
+
+    def candy_qty(self):
+        content: WebElement = self.find_element_by_css_selector('div[class="mb-2 font-weight-bold"]')
+        res = content.get_attribute('innerHTML')
+        print(res)

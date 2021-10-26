@@ -1,11 +1,14 @@
 import platform
+import os
 import logging
 if platform.system() == 'Linux':
     from pyvirtualdisplay import Display
 
 from candy import Candy
 import time
-logging.basicConfig(filename='run.log',format='%(asctime)s %(message)s', level=logging.DEBUG)
+
+pwd = os.path.abspath(os.curdir)
+logging.basicConfig(filename=pwd+r'\run.log',format='%(asctime)s %(message)s', level=logging.INFO)
 
 
 class VirtualDisplay:
@@ -35,5 +38,7 @@ with VirtualDisplay(platform.system()):
         bot.sing_in()
         bot.login()
         bot.open_page_candy()
-        bot.candys_available()
-        # bot.get_points()
+        try:
+            bot.get_points()
+        except:
+            bot.candys_available()
