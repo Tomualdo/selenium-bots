@@ -1,6 +1,7 @@
 import os, sys, platform
 import logging
 from selenium import webdriver
+from selenium.webdriver.remote import webelement
 from selenium.webdriver.remote.webelement import WebElement
 from creds import PASS, USER
 from binary_locations import search_binary
@@ -9,6 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webelement import WebElement
 
 
+>>>>>>> fix
 class Candy(webdriver.Chrome):
     def __init__(self):
         pwd = os.path.abspath(os.curdir)
