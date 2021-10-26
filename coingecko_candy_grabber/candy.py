@@ -1,5 +1,6 @@
 import os, sys, platform
 from selenium import webdriver
+from selenium.webdriver.remote import webelement
 from selenium.webdriver.remote.webelement import WebElement
 from creds import PASS, USER
 from binary_locations import search_binary
@@ -8,7 +9,19 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.remote.webelement import WebElement
 
+import logging
+from logging import Logger
 
+# logging.basicConfig(filename='myapp.log',format='%(asctime)s %(message)s', level=logging.NOTSET)
+# logger = logging.getLogger(__name__).addHandler(logging.StreamHandler())
+
+logger = logging.getLogger('mylogger')
+def my_handler(type, value, tb):
+    logger.exception(f"Uncaught exception: {type} {value}")
+
+
+# Install exception handler
+sys.excepthook = my_handler
 
 class Candy(webdriver.Chrome):
     def __init__(self):
@@ -17,7 +30,7 @@ class Candy(webdriver.Chrome):
         options.add_experimental_option("detach", True)
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
         options.binary_location = search_binary()
-        driver_path = Service(pwd+r'\chromedriver_94.exe',)
+        driver_path = Service(pwd+r'\chromedriver_95.exe',)
         super(Candy, self).__init__(options=options, service=driver_path)
         self.implicitly_wait(5000)
         self.maximize_window()
@@ -48,12 +61,15 @@ class Candy(webdriver.Chrome):
 
     def get_points(self):        
         self.find_element_by_css_selector('input[data-target="points.button"]').click()
+        print("Candies grabbed !")
+        self.candy_qty()
 
     def candys_available(self):
-        try:
-            content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
-            res = content.get_attribute('innerHTML')
-            print(f"No candies available...wait {res}")
-        except:
-            print("There are candies available")
-            self.get_points()
+        content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
+        res = content.get_attribute('innerHTML')
+        print(f"No candies available...wait {res}")
+    
+    def candy_qty(self):
+        cont: WebElement = self.find_element_by_css_selector('div[class="mb-2 font-weight-bold"]')
+        res = cont.get_attribute('innerHTML')
+        print(res)

@@ -1,3 +1,4 @@
 coingecko_candy_grabber/creds.py
 __pycache__
 .venv
+*.log

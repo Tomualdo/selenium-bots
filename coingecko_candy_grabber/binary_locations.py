@@ -1,7 +1,7 @@
 import os
 
 bin_list = [r"C:\Program Files (x86)\BraveSoftware\Brave-Browser\Application\brave.exe",
-            fr"C:\Users\{os.getlogin()}\AppData\Local\BraveSoftware\Brave-Browser\Application\brave.ee"]
+            fr"C:\Users\{os.getlogin()}\AppData\Local\BraveSoftware\Brave-Browser\Application\brave.exe"]
 
 def search_binary():
     for b in bin_list:
