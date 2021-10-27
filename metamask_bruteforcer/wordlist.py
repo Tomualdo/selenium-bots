@@ -2047,4 +2047,8 @@ words = [
 "zero",
 "zone",
 "zoo",
+<<<<<<< HEAD
 ]
+=======
+]
+>>>>>>> metamask
