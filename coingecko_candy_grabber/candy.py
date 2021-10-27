@@ -12,6 +12,7 @@ from selenium.webdriver.remote.webelement import WebElement
 import logging
 from logging import Logger
 
+print (__name__)
 # logging.basicConfig(filename='myapp.log',format='%(asctime)s %(message)s', level=logging.NOTSET)
 # logger = logging.getLogger(__name__).addHandler(logging.StreamHandler())
 

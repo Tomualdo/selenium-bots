@@ -1,0 +1,1 @@
+from coingecko_candy_grabber.candy import Candy
