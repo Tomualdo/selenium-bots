@@ -41,7 +41,8 @@ class Metamask(webdriver.Chrome):
     def __enter__(self):
         return self
     
-    def wordlist_combinator(num_words, list_words):
+    @staticmethod
+    def wordlist_combinator(num_words:int, list_words:list):
         accepted_words = {12:128, 15:160, 18:192, 21:224, 24:256}
         if num_words is not None and num_words not in accepted_words.keys():
             raise ValueError(f"words count did not match required count {accepted_words.keys()}")
@@ -57,7 +58,7 @@ class Metamask(webdriver.Chrome):
                     seed.append(word)
                 else:
                     raise ValueError(f'Word: {word} is not in wordlist !')
-        print(seed)
+        # print(seed)
         # fill up the rest od seed
         for idx in range(diff-1):
             rnd = secrets.randbits(11)
@@ -65,9 +66,13 @@ class Metamask(webdriver.Chrome):
         print(seed)
         ## extract each word position to number ..... wordlist_combinator(12,['','you'])
         seed_int: str = ''
-        # TODO Bitshift ???
+        # TODO Bitshift ??? a=2 (0010) b=3 (0011) c=1 ->> a<<8+b<<4+c = 561
         for word in seed:
             seed_int += bin(wordlist.index(word))[2:].zfill(11)
+        # print(f"{int(seed_int, 2)=}")
+        # print(f"{seed_int=}")
+        # print(f"{len(seed_int)=}")
+        print(f"{int(seed_int[:-4],2)=}")
         # print(f"{seed_int=}\n{len(seed_int)=}")   #debug
         ## test of correctness
         regen_seed = []
@@ -77,12 +82,16 @@ class Metamask(webdriver.Chrome):
         print(f"{regen_seed=}")
         ## entrophy and checksum
         h=int(seed_int, 2).to_bytes(len(seed_int), byteorder='big')
+        
         entrophy = binascii.hexlify(h).decode()
         entrophy_sha = binascii.hexlify(hashlib.sha256(h).digest()).decode()
         chsum_len = accepted_words.get(num_words) // 32
         chsum = bin(int(entrophy_sha,16))[2::].zfill(256)
+        print(f"{int(chsum,2)=}\n{int(entrophy,16)=}\n{int(entrophy_sha,16)=}")
+        print(f"{chsum=}\n{entrophy=}\n{entrophy_sha=}")
         chsum = chsum[:chsum_len]
         seed_int += chsum
+        print(f"{int(seed_int,2)=}")
         seed_final = []
         for i in range(0,len(seed_int),11):
             seed_final.append(wordlist[int(seed_int[i:i+11],2)])
@@ -91,6 +100,7 @@ class Metamask(webdriver.Chrome):
     @staticmethod
     def gen_wordlist(words: int=15, previous_seed: int=None ):
         """Generate seed according BIP39"""
+        # print("\n***Gen-Worldist***")
         accepted_words = {12:128, 15:160, 18:192, 21:224, 24:256}
         if words is not None and words not in accepted_words.keys():
             raise ValueError(f"words count did not match required count {accepted_words.keys()}")
@@ -100,6 +110,7 @@ class Metamask(webdriver.Chrome):
         else:
             start_seed = previous_seed
         s = bin(start_seed)[2:].zfill(bits)
+        # print(f"{s=}")
         h=int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
         entrophy = binascii.hexlify(h).decode()
         entrophy_sha = binascii.hexlify(hashlib.sha256(h).digest()).decode()
@@ -113,7 +124,8 @@ class Metamask(webdriver.Chrome):
             # print(f"{int(s_[i:i+11],2)} = {k.words[int(s_[i:i+11],2)]}")
             seed.append(wordlist[int(s_[i:i+11],2)])
         # print(f"{s=}\n{chsum=}\n{seed=}\n{entrophy=}\n{start_seed=}\n{len(seed)=}")
-        print(seed)
+        # print(f"{seed=}\n{start_seed=}\n{len(seed)=}\n{s_=}\n{int(s_,2)=}")
+        print(f"{seed}"+" "*20, end='\r')
         return seed, entrophy, start_seed
 
     def open_page(self):
@@ -198,8 +210,12 @@ with Metamask() as a:
             restore=True
         else:
             print("something found !")
+            # time.sleep(500)
             sys.exit(0)
-        
 
+# s= 10230366516029576697018768894656747
+# while True:
+#     Metamask.gen_wordlist(12,s)
+#     s+=1
 
-    time.sleep(500)
+    # time.sleep(500)
