@@ -27,7 +27,7 @@ sys.excepthook = my_handler
 class Metamask(webdriver.Chrome):
     def __init__(self, number):
         self.number = number
-        pwd = os.path.abspath(os.curdir)
+        self.pwd = os.path.abspath(os.curdir)
         par = os.path.dirname(os.getcwd())
         options = Options()
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
@@ -211,7 +211,7 @@ class Metamask(webdriver.Chrome):
             tim = datetime.now().strftime('%d.%m.%y %H:%M:%S')
             filedata = f"{tim} {self.expansion=} {str(self.value)}  {str(self.seed)} {self.entrophy}"
             if found:
-                filedata += 100*"^"
+                filedata += '\n'+100*"^"
             file1.write(filedata)
             file1.write("\n")
     
