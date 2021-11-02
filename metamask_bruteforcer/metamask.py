@@ -9,6 +9,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from threading import Thread
+from datetime import datetime
+
 
 import logging
 logger = logging.getLogger('metamask.log')
@@ -23,15 +26,17 @@ def my_handler(type, value, tb):
 sys.excepthook = my_handler
 
 class Metamask(webdriver.Chrome):
-    def __init__(self):
-        pwd = os.path.abspath(os.curdir)
+    def __init__(self, number):
+        self.number = number
+        self.pwd = os.path.abspath(os.curdir)
         options = Options()
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.add_extension(pwd+r'/metamask_extension_10_3_0_0.crx')
-        driver_path = Service(pwd+r'\chromedriver_95.exe',)
+        options.add_extension(self.pwd+r'/metamask_extension_10_3_0_0.crx')
+        driver_path = Service(self.pwd+r'\chromedriver_95.exe',)
         super(Metamask, self).__init__(options=options, service=driver_path)
         self.implicitly_wait(5)
-        self.maximize_window()
+        self.minimize_window()
+        self.thread = None
 
     def __exit__(self, *args) -> None:
         print("Exiting...")
@@ -125,7 +130,7 @@ class Metamask(webdriver.Chrome):
             seed.append(wordlist[int(s_[i:i+11],2)])
         # print(f"{s=}\n{chsum=}\n{seed=}\n{entrophy=}\n{start_seed=}\n{len(seed)=}")
         # print(f"{seed=}\n{start_seed=}\n{len(seed)=}\n{s_=}\n{int(s_,2)=}")
-        print(f"{seed}"+" "*20, end='\r')
+        print(f"{seed}")
         return seed, entrophy, start_seed
 
     def open_page(self):
@@ -141,6 +146,7 @@ class Metamask(webdriver.Chrome):
                     break
     
     def get_started(self):
+        self.minimize_window()
         self.find_element(By.CSS_SELECTOR,'button[class="button btn--rounded btn-primary first-time-flow__button"]').click()
         self.find_element(By.CSS_SELECTOR,'button[class="button btn--rounded btn-primary first-time-flow__button"]').click()
         self.find_element(By.CSS_SELECTOR,'button[data-testid="page-container-footer-next"]').click()
@@ -165,9 +171,16 @@ class Metamask(webdriver.Chrome):
         self.find_element(By.CSS_SELECTOR,'.first-time-flow__button').click()
     
     def get_values(self) -> float:
-        balance = self.find_element(By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(By.CSS_SELECTOR,'.currency-display-component__text')
+        WebDriverWait(self,15).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR,'.eth-overview__secondary-balance'))
+            )
+        balance = self.find_element(
+            By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(
+                By.CSS_SELECTOR,'.currency-display-component__text')
         val = balance.get_attribute('innerHTML')
-        print(val+self.find_element(By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(By.CSS_SELECTOR,'.currency-display-component__suffix').get_attribute('innerHTML'))
+        print(str(self.number)+' '+val+self.find_element(
+            By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(
+                By.CSS_SELECTOR,'.currency-display-component__suffix').get_attribute('innerHTML'))
         return float(val[1:])
 
     def lock_wallet(self, restore=False):
@@ -195,23 +208,84 @@ class Metamask(webdriver.Chrome):
 
         self.find_element(By.CSS_SELECTOR,'.first-time-flow__button').click()
 
-# list-item__subheading
-# currency-display-component__text
-# currency-display-component eth-overview__secondary-balance
-with Metamask() as a:
-    a.open_page()
-    a.get_started()
-    a.import_wallet()
-    restore = False
-    while True:
-        if a.get_values() == 0:
-            a.lock_wallet(restore)
-            a.restore_wallet()
-            restore=True
-        else:
-            print("something found !")
-            # time.sleep(500)
-            sys.exit(0)
+    def save_wallet(self, found=False):
+        with open(self.pwd+r"/wallets.txt", "a") as file1:
+        # Writing data to a file
+            tim = datetime.now().strftime('%d.%m.%y %H:%M:%S')
+            filedata = f"{tim} {self.expansion=} {str(self.value)}  {str(self.seed)} {self.entrophy}"
+            if found:
+                filedata += 100*"^"
+            file1.write(filedata)
+            file1.write("\n")
+    
+    def _refresh(self):
+        print("...Refreshing...")
+        # self.refresh()
+    
+    def start(self):
+        def _go():
+            self.open_page()
+            self.get_started()
+            self.import_wallet()
+            restore = False
+            while True:
+                tim = time.time()
+                self.value = self.get_values()
+                if self.value == 0:
+                    self.lock_wallet(restore)
+                    self.restore_wallet()
+                    restore=True
+                else:
+                    print("something found !")
+                    self.save_wallet(True)
+                    sys.exit(0)
+        self.thread = Thread(target=_go,)
+        self.thread.start()
+    
+    def _join(self):
+        self.thread.join()
+
+threads = []
+for i in range(3):
+    threads.append(Metamask(i))
+
+for thread in threads:
+    thread.start()
+
+for thread in threads:
+    thread._join()
+    
+# a = Metamask()
+# b = Metamask()
+# a.start()
+# b.start()
+
+# a._join()
+# b._join()
+
+
+# with Metamask() as a:
+    # a.start()
+    # a.open_page()
+    # a.get_started()
+    # a.import_wallet()
+    # restore = False
+    # while True:
+    #     tim = time.time()
+    #     if a.get_values() == 0:
+    #         a.lock_wallet(restore)
+    #         a.restore_wallet()
+    #         restore=True
+    #         tim_end = time.time()
+    #         tim_ela = tim_end - tim
+    #         print(f"elapsed time: {tim_ela}")
+    #         if tim_ela > 2.5:
+    #             time.sleep(5)
+    #             a._refresh()
+    #     else:
+    #         print("something found !")
+    #         # time.sleep(500)
+    #         sys.exit(0)
 
 # s= 10230366516029576697018768894656747
 # while True:
