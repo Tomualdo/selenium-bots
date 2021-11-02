@@ -8,7 +8,7 @@ from candy import Candy
 import time
 
 pwd = os.path.abspath(os.curdir)
-logging.basicConfig(filename=pwd+r'\run.log',format='%(asctime)s %(message)s', level=logging.INFO)
+logging.basicConfig(filename=pwd+r'/run.log',format='%(asctime)s %(message)s', level=logging.INFO)
 
 
 class VirtualDisplay:
