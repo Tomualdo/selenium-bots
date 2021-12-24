@@ -32,13 +32,23 @@ class VirtualDisplay:
             print("no linux ?")
         
 
-with VirtualDisplay(platform.system()):
-    with Candy() as bot:
-        bot.open_page()
-        bot.sing_in()
-        bot.login()
-        bot.open_page_candy()
-        try:
-            bot.get_points()
-        except:
-            bot.candys_available()
+# with VirtualDisplay(platform.system()):
+#     with Candy() as bot:
+#         bot.open_page()
+#         bot.sing_in()
+#         bot.login()
+#         bot.open_page_candy()
+#         try:
+#             bot.get_points()
+#         except:
+#             bot.candys_available()
+
+with Candy() as bot:
+    bot.open_page()
+    bot.sing_in()
+    bot.login()
+    bot.open_page_candy()
+    try:
+        bot.get_points()
+    except:
+        bot.candys_available()

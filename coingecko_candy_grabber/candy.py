@@ -19,15 +19,19 @@ class Candy(webdriver.Chrome):
         pwd = os.path.abspath(os.curdir)
         parent_dir = os.path.split(os.getcwd())[0]
         options = Options()
-        #options.add_experimental_option("detach", True)
-        #options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        #options.binary_location = search_binary()
-        #driver_path = pwd+r'/chromedriver'
+        # options.add_experimental_option("detach", True)
+        # options.add_experimental_option('excludeSwitches', ['enable-logging'])
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        binary_location = search_binary()
+        options.binary_location = binary_location
+        driver_path = pwd+r'/chromedriver'
         #print(os.environ['PATH'])
-        #os.environ['PATH'] += ":"+parent_dir
-        #print(os.environ['PATH'])
+        os.environ['PATH'] += ":"+driver_path+":"
+        print(os.environ['PATH'])
         try:
-            super(Candy, self).__init__()
+            print("...INIT FINISH")
+            super(Candy, self).__init__(options=options)
+            print("...INIT FINISH")
         except Exception as e:
             print(e)
         self.implicitly_wait(5)
