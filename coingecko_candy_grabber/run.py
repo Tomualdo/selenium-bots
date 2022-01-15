@@ -8,7 +8,6 @@ from candy import Candy
 import time
 
 pwd = os.path.abspath(os.curdir)
-logging.basicConfig(filename=pwd+r'/run.log',format='%(asctime)s %(message)s', level=logging.INFO)
 
 
 class VirtualDisplay:
@@ -41,14 +40,14 @@ class VirtualDisplay:
 #         try:
 #             bot.get_points()
 #         except:
-#             bot.candys_available()
+#             bot.candies_available()
 
 with Candy() as bot:
-    bot.open_page()
-    bot.sing_in()
+    bot.open_page_candy()
+    # bot.sing_in()
     bot.login()
     bot.open_page_candy()
     try:
         bot.get_points()
     except:
-        bot.candys_available()
+        bot.candies_available()

@@ -8,11 +8,6 @@ from binary_locations import search_binary
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.remote.webelement import WebElement
 
-logger = logging.getLogger('mylogger')
-def my_handler(type, value, tb):
-    logger.exception(f"Uncaught exception: {type} {value}")
-
-sys.excepthook = my_handler
 
 class Candy(webdriver.Chrome):
     def __init__(self):
@@ -24,7 +19,7 @@ class Candy(webdriver.Chrome):
         options.add_argument("--disable-blink-features=AutomationControlled")
         binary_location = search_binary()
         options.binary_location = binary_location
-        driver_path = pwd+r'/chromedriver'
+        driver_path = pwd+'/chromedriver'
         #print(os.environ['PATH'])
         os.environ['PATH'] += ":"+driver_path+":"
         print(os.environ['PATH'])
@@ -40,6 +35,7 @@ class Candy(webdriver.Chrome):
         
     def __exit__(self, *args) -> None:
         print("Exiting...")
+        self.close()
         self.quit()
         sys.exit()
     
@@ -54,11 +50,11 @@ class Candy(webdriver.Chrome):
         print("singed in !")
 
     def login(self):
-        email = self.find_element_by_id('signInEmail')
+        email = self.find_element_by_css_selector("input[name='user[email]']")
         email.send_keys(USER)
-        password = self.find_element_by_id('signInPassword')
+        password = self.find_element_by_css_selector("input[name='user[password]']")
         password.send_keys(PASS)
-        self.find_element_by_css_selector('input[data-action="user-login-modal#submit"]').click()
+        self.find_element_by_css_selector("input[type='submit']").click()
 
     def open_page_candy(self):
         self.get('https://www.coingecko.com/account/candy?locale=en')
@@ -68,7 +64,7 @@ class Candy(webdriver.Chrome):
         print("Candies grabbed !")
         self.candy_qty()
 
-    def candys_available(self):
+    def candies_available(self):
         content:WebElement = self.find_element_by_id('next-daily-reward-countdown-timer')
         res = content.get_attribute('innerHTML')
         print(f"No candies available...wait {res}")
