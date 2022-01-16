@@ -9,6 +9,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+from threading import Thread
+from datetime import datetime
+
 
 import logging
 logger = logging.getLogger('metamask.log')
@@ -23,15 +26,17 @@ def my_handler(type, value, tb):
 sys.excepthook = my_handler
 
 class Metamask(webdriver.Chrome):
-    def __init__(self):
-        pwd = os.path.abspath(os.curdir)
+    def __init__(self, number):
+        self.number = number
+        self.pwd = os.path.abspath(os.curdir)
         options = Options()
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.add_extension(pwd+r'/metamask_extension_10_3_0_0.crx')
-        driver_path = Service(pwd+r'\chromedriver_95.exe',)
+        options.add_extension(self.pwd+r'/metamask_extension_10_3_0_0.crx')
+        driver_path = Service(self.pwd+r'\chromedriver_95.exe',)
         super(Metamask, self).__init__(options=options, service=driver_path)
         self.implicitly_wait(5)
-        self.maximize_window()
+        self.minimize_window()
+        self.thread = None
 
     def __exit__(self, *args) -> None:
         print("Exiting...")
@@ -41,7 +46,8 @@ class Metamask(webdriver.Chrome):
     def __enter__(self):
         return self
     
-    def wordlist_combinator(num_words, list_words):
+    @staticmethod
+    def wordlist_combinator(num_words:int, list_words:list):
         accepted_words = {12:128, 15:160, 18:192, 21:224, 24:256}
         if num_words is not None and num_words not in accepted_words.keys():
             raise ValueError(f"words count did not match required count {accepted_words.keys()}")
@@ -57,7 +63,7 @@ class Metamask(webdriver.Chrome):
                     seed.append(word)
                 else:
                     raise ValueError(f'Word: {word} is not in wordlist !')
-        print(seed)
+        # print(seed)
         # fill up the rest od seed
         for idx in range(diff-1):
             rnd = secrets.randbits(11)
@@ -65,9 +71,13 @@ class Metamask(webdriver.Chrome):
         print(seed)
         ## extract each word position to number ..... wordlist_combinator(12,['','you'])
         seed_int: str = ''
-        # TODO Bitshift ???
+        # TODO Bitshift ??? a=2 (0010) b=3 (0011) c=1 ->> a<<8+b<<4+c = 561
         for word in seed:
             seed_int += bin(wordlist.index(word))[2:].zfill(11)
+        # print(f"{int(seed_int, 2)=}")
+        # print(f"{seed_int=}")
+        # print(f"{len(seed_int)=}")
+        print(f"{int(seed_int[:-4],2)=}")
         # print(f"{seed_int=}\n{len(seed_int)=}")   #debug
         ## test of correctness
         regen_seed = []
@@ -77,12 +87,16 @@ class Metamask(webdriver.Chrome):
         print(f"{regen_seed=}")
         ## entrophy and checksum
         h=int(seed_int, 2).to_bytes(len(seed_int), byteorder='big')
+        
         entrophy = binascii.hexlify(h).decode()
         entrophy_sha = binascii.hexlify(hashlib.sha256(h).digest()).decode()
         chsum_len = accepted_words.get(num_words) // 32
         chsum = bin(int(entrophy_sha,16))[2::].zfill(256)
+        print(f"{int(chsum,2)=}\n{int(entrophy,16)=}\n{int(entrophy_sha,16)=}")
+        print(f"{chsum=}\n{entrophy=}\n{entrophy_sha=}")
         chsum = chsum[:chsum_len]
         seed_int += chsum
+        print(f"{int(seed_int,2)=}")
         seed_final = []
         for i in range(0,len(seed_int),11):
             seed_final.append(wordlist[int(seed_int[i:i+11],2)])
@@ -91,6 +105,7 @@ class Metamask(webdriver.Chrome):
     @staticmethod
     def gen_wordlist(words: int=15, previous_seed: int=None ):
         """Generate seed according BIP39"""
+        # print("\n***Gen-Worldist***")
         accepted_words = {12:128, 15:160, 18:192, 21:224, 24:256}
         if words is not None and words not in accepted_words.keys():
             raise ValueError(f"words count did not match required count {accepted_words.keys()}")
@@ -100,6 +115,7 @@ class Metamask(webdriver.Chrome):
         else:
             start_seed = previous_seed
         s = bin(start_seed)[2:].zfill(bits)
+        # print(f"{s=}")
         h=int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
         entrophy = binascii.hexlify(h).decode()
         entrophy_sha = binascii.hexlify(hashlib.sha256(h).digest()).decode()
@@ -113,7 +129,8 @@ class Metamask(webdriver.Chrome):
             # print(f"{int(s_[i:i+11],2)} = {k.words[int(s_[i:i+11],2)]}")
             seed.append(wordlist[int(s_[i:i+11],2)])
         # print(f"{s=}\n{chsum=}\n{seed=}\n{entrophy=}\n{start_seed=}\n{len(seed)=}")
-        print(seed)
+        # print(f"{seed=}\n{start_seed=}\n{len(seed)=}\n{s_=}\n{int(s_,2)=}")
+        print(f"{seed}")
         return seed, entrophy, start_seed
 
     def open_page(self):
@@ -129,6 +146,7 @@ class Metamask(webdriver.Chrome):
                     break
     
     def get_started(self):
+        self.minimize_window()
         self.find_element(By.CSS_SELECTOR,'button[class="button btn--rounded btn-primary first-time-flow__button"]').click()
         self.find_element(By.CSS_SELECTOR,'button[class="button btn--rounded btn-primary first-time-flow__button"]').click()
         self.find_element(By.CSS_SELECTOR,'button[data-testid="page-container-footer-next"]').click()
@@ -153,9 +171,16 @@ class Metamask(webdriver.Chrome):
         self.find_element(By.CSS_SELECTOR,'.first-time-flow__button').click()
     
     def get_values(self) -> float:
-        balance = self.find_element(By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(By.CSS_SELECTOR,'.currency-display-component__text')
+        WebDriverWait(self,15).until(
+            EC.visibility_of_element_located((By.CSS_SELECTOR,'.eth-overview__secondary-balance'))
+            )
+        balance = self.find_element(
+            By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(
+                By.CSS_SELECTOR,'.currency-display-component__text')
         val = balance.get_attribute('innerHTML')
-        print(val+self.find_element(By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(By.CSS_SELECTOR,'.currency-display-component__suffix').get_attribute('innerHTML'))
+        print(str(self.number)+' '+val+self.find_element(
+            By.CSS_SELECTOR,'.eth-overview__secondary-balance').find_element(
+                By.CSS_SELECTOR,'.currency-display-component__suffix').get_attribute('innerHTML'))
         return float(val[1:])
 
     def lock_wallet(self, restore=False):
@@ -183,23 +208,88 @@ class Metamask(webdriver.Chrome):
 
         self.find_element(By.CSS_SELECTOR,'.first-time-flow__button').click()
 
-# list-item__subheading
-# currency-display-component__text
-# currency-display-component eth-overview__secondary-balance
-with Metamask() as a:
-    a.open_page()
-    a.get_started()
-    a.import_wallet()
-    restore = False
-    while True:
-        if a.get_values() == 0:
-            a.lock_wallet(restore)
-            a.restore_wallet()
-            restore=True
-        else:
-            print("something found !")
-            sys.exit(0)
-        
+    def save_wallet(self, found=False):
+        with open(self.pwd+r"/wallets.txt", "a") as file1:
+        # Writing data to a file
+            tim = datetime.now().strftime('%d.%m.%y %H:%M:%S')
+            filedata = f"{tim} {self.expansion=} {str(self.value)}  {str(self.seed)} {self.entrophy}"
+            if found:
+                filedata += 100*"^"
+            file1.write(filedata)
+            file1.write("\n")
+    
+    def _refresh(self):
+        print("...Refreshing...")
+        # self.refresh()
+    
+    def start(self):
+        def _go():
+            self.open_page()
+            self.get_started()
+            self.import_wallet()
+            restore = False
+            while True:
+                tim = time.time()
+                self.value = self.get_values()
+                if self.value == 0:
+                    self.lock_wallet(restore)
+                    self.restore_wallet()
+                    restore=True
+                else:
+                    print("something found !")
+                    self.save_wallet(True)
+                    sys.exit(0)
+        self.thread = Thread(target=_go,)
+        self.thread.start()
+    
+    def _join(self):
+        self.thread.join()
+
+threads = []
+for i in range(3):
+    threads.append(Metamask(i))
+
+for thread in threads:
+    thread.start()
+
+for thread in threads:
+    thread._join()
+    
+# a = Metamask()
+# b = Metamask()
+# a.start()
+# b.start()
+
+# a._join()
+# b._join()
 
 
-    time.sleep(500)
+# with Metamask() as a:
+    # a.start()
+    # a.open_page()
+    # a.get_started()
+    # a.import_wallet()
+    # restore = False
+    # while True:
+    #     tim = time.time()
+    #     if a.get_values() == 0:
+    #         a.lock_wallet(restore)
+    #         a.restore_wallet()
+    #         restore=True
+    #         tim_end = time.time()
+    #         tim_ela = tim_end - tim
+    #         print(f"elapsed time: {tim_ela}")
+    #         if tim_ela > 2.5:
+    #             time.sleep(5)
+    #             a._refresh()
+    #     else:
+    #         print("something found !")
+    #         # time.sleep(500)
+    #         sys.exit(0)
+
+# s= 10230366516029576697018768894656747
+# while True:
+#     Metamask.gen_wordlist(12,s)
+#     s+=1
+
+    # time.sleep(500)
