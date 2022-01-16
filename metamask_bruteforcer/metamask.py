@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
 from threading import Thread
 from datetime import datetime
 
@@ -28,13 +29,14 @@ class Metamask(webdriver.Chrome):
     def __init__(self, number):
         self.number = number
         self.pwd = os.path.abspath(os.curdir)
-        par = os.path.dirname(os.getcwd())
         options = Options()
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
-        options.add_extension(par+r'/metamask_extension_10_3_0_0.crx')
-        super(Metamask, self).__init__(options=options)
+        options.add_extension(self.pwd+r'/metamask_extension_10_3_0_0.crx')
+        driver_path = Service(self.pwd+r'\chromedriver_95.exe',)
+        super(Metamask, self).__init__(options=options, service=driver_path)
         self.implicitly_wait(5)
-        self.maximize_window()
+        self.minimize_window()
+        self.thread = None
 
     def __exit__(self, *args) -> None:
         print("Exiting...")
@@ -43,7 +45,7 @@ class Metamask(webdriver.Chrome):
 
     def __enter__(self):
         return self
-
+    
     @staticmethod
     def wordlist_combinator(num_words:int, list_words:list):
         accepted_words = {12:128, 15:160, 18:192, 21:224, 24:256}
@@ -144,13 +146,14 @@ class Metamask(webdriver.Chrome):
                     break
     
     def get_started(self):
+        self.minimize_window()
         self.find_element(By.CSS_SELECTOR,'button[class="button btn--rounded btn-primary first-time-flow__button"]').click()
         self.find_element(By.CSS_SELECTOR,'button[class="button btn--rounded btn-primary first-time-flow__button"]').click()
         self.find_element(By.CSS_SELECTOR,'button[data-testid="page-container-footer-next"]').click()
 
     def import_wallet(self):
 
-        WebDriverWait(self,15).until(
+        WebDriverWait(self,5).until(
             EC.visibility_of_element_located((By.XPATH,'//input'))
             )
         print("Inputs located...")
@@ -190,7 +193,7 @@ class Metamask(webdriver.Chrome):
         self.find_element(By.CSS_SELECTOR,'.unlock-page__link--import').click()
     
     def restore_wallet(self):
-        WebDriverWait(self,15).until(
+        WebDriverWait(self,5).until(
             EC.visibility_of_element_located((By.XPATH,'//input'))
             )
         self.seed, self.entrophy, self.previous_seed = self.gen_wordlist(12,self.previous_seed+self.expansion)
@@ -211,7 +214,7 @@ class Metamask(webdriver.Chrome):
             tim = datetime.now().strftime('%d.%m.%y %H:%M:%S')
             filedata = f"{tim} {self.expansion=} {str(self.value)}  {str(self.seed)} {self.entrophy}"
             if found:
-                filedata += '\n'+100*"^"
+                filedata += 100*"^"
             file1.write(filedata)
             file1.write("\n")
     
@@ -241,4 +244,52 @@ class Metamask(webdriver.Chrome):
     
     def _join(self):
         self.thread.join()
- 
+
+threads = []
+for i in range(3):
+    threads.append(Metamask(i))
+
+for thread in threads:
+    thread.start()
+
+for thread in threads:
+    thread._join()
+    
+# a = Metamask()
+# b = Metamask()
+# a.start()
+# b.start()
+
+# a._join()
+# b._join()
+
+
+# with Metamask() as a:
+    # a.start()
+    # a.open_page()
+    # a.get_started()
+    # a.import_wallet()
+    # restore = False
+    # while True:
+    #     tim = time.time()
+    #     if a.get_values() == 0:
+    #         a.lock_wallet(restore)
+    #         a.restore_wallet()
+    #         restore=True
+    #         tim_end = time.time()
+    #         tim_ela = tim_end - tim
+    #         print(f"elapsed time: {tim_ela}")
+    #         if tim_ela > 2.5:
+    #             time.sleep(5)
+    #             a._refresh()
+    #     else:
+    #         print("something found !")
+    #         # time.sleep(500)
+    #         sys.exit(0)
+
+# s= 10230366516029576697018768894656747
+# while True:
+#     Metamask.gen_wordlist(12,s)
+#     s+=1
+
+    # time.sleep(500)
