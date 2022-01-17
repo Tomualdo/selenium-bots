@@ -73,3 +73,5 @@ class Candy(webdriver.Chrome):
         content: WebElement = self.find_element_by_css_selector('div[class="mb-2 font-weight-bold"]')
         res = content.get_attribute('innerHTML')
         print(res)
+
+    # t1
