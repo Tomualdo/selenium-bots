@@ -13,6 +13,7 @@ pwd = os.path.abspath(os.curdir)
 class VirtualDisplay:
     def __init__(self, platform) -> None:
         if platform == 'Linux':
+            print('Running LINUX !!!')
             self.display = Display(visible=0, size=(1280,1024))
             self.display.start()
         pass
@@ -29,25 +30,10 @@ class VirtualDisplay:
             self.display.stop()
         else:
             print("no linux ?")
-        
 
-# with VirtualDisplay(platform.system()):
-#     with Candy() as bot:
-#         bot.open_page()
-#         bot.sing_in()
-#         bot.login()
-#         bot.open_page_candy()
-#         try:
-#             bot.get_points()
-#         except:
-#             bot.candies_available()
 
-with Candy() as bot:
-    bot.open_page_candy()
-    # bot.sing_in()
-    bot.login()
-    bot.open_page_candy()
-    try:
-        bot.get_points()
-    except:
-        bot.candies_available()
+with VirtualDisplay(platform.system()):
+    for _ in range(1):
+        with Candy() as bot:
+            bot.markiza()
+            # bot.check_ip()
